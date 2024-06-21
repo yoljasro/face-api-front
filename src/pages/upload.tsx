@@ -1,57 +1,71 @@
-import { useState, ChangeEvent, FormEvent } from 'react';
+import { useState } from 'react';
+import axios from 'axios';
 
-const Upload: React.FC = () => {
-  const [employeeId, setEmployeeId] = useState<string>('');
-  const [files, setFiles] = useState<FileList | null>(null);
+const UploadPage = () => {
+  const [employeeId, setEmployeeId] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
 
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setFiles(e.target.files);
-    }
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedFiles(event.target.files);
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    if (files && employeeId) {
-      const formData = new FormData();
-      formData.append('employeeId', employeeId);
-      for (let i = 0; i < files.length; i++) {
-        formData.append('files', files[i]);
-      }
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
+  const handleSubmit = async (event: React.FormEvent) => {
+    event.preventDefault();
+
+    if (!selectedFiles || !employeeId) {
+      alert('Please select files and enter employee ID');
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('employeeId', employeeId);
+    for (let i = 0; i < selectedFiles.length; i++) {
+      formData.append('files', selectedFiles[i]);
+    }
+
+    try {
+      await axios.post('http://localhost:5000/api/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data'
+        }
       });
-      if (response.ok) {
-        console.log('Files uploaded successfully');
-      } else {
-        console.error('Failed to upload files');
-      }
+      alert('Files uploaded successfully');
+    } catch (error) {
+      console.error('Error uploading files:', error);
+      alert('Failed to upload files');
     }
   };
 
   return (
     <div>
-      <h1>Upload Employee Faces</h1>
+      <h1>Upload Employee Photos</h1>
       <form onSubmit={handleSubmit}>
-        <input
-          type="text"
-          placeholder="Employee ID"
-          value={employeeId}
-          onChange={(e) => setEmployeeId(e.target.value)}
-          required
-        />
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={handleFileChange}
-          required
-        />
+        <div>
+          <label>
+            Employee ID:
+            <input
+              type="text"
+              value={employeeId}
+              onChange={(e) => setEmployeeId(e.target.value)}
+              required
+            />
+          </label>
+        </div>
+        <div>
+          <label>
+            Select Photos:
+            <input
+              type="file"
+              multiple
+              onChange={handleFileChange}
+              required
+            />
+          </label>
+        </div>
         <button type="submit">Upload</button>
       </form>
     </div>
   );
 };
 
-export default Upload;
+export default UploadPage;
