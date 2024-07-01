@@ -4,6 +4,7 @@ import axios from 'axios';
 
 const HomePage = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isFaceDetected, setIsFaceDetected] = useState(false);
@@ -13,9 +14,9 @@ const HomePage = () => {
     const loadModels = async () => {
       try {
         await Promise.all([
-          faceapi.nets.tinyFaceDetector.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/tiny_face_detector_model-weights_manifest.json'),
-          faceapi.nets.faceLandmark68Net.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/face_landmark_68_model-weights_manifest.json'),
-          faceapi.nets.faceRecognitionNet.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/face_recognition_model-weights_manifest.json')
+          faceapi.nets.tinyFaceDetector.loadFromUri('/models'),
+          faceapi.nets.faceLandmark68Net.loadFromUri('/models'),
+          faceapi.nets.faceRecognitionNet.loadFromUri('/models')
         ]);
         setModelsLoaded(true);
       } catch (err) {
@@ -29,13 +30,15 @@ const HomePage = () => {
 
   useEffect(() => {
     const detectFace = async () => {
-      if (modelsLoaded && videoRef.current) {
+      if (modelsLoaded && videoRef.current && canvasRef.current) {
         navigator.mediaDevices.getUserMedia({ video: true })
           .then(stream => {
             if (videoRef.current) {
               videoRef.current.srcObject = stream;
               videoRef.current.play();
-              const startTime = new Date().getTime();
+              const displaySize = { width: videoRef.current.videoWidth, height: videoRef.current.videoHeight };
+              faceapi.matchDimensions(canvasRef.current, displaySize);
+
               const interval = setInterval(async () => {
                 const detections = await faceapi.detectSingleFace(videoRef.current!, new faceapi.TinyFaceDetectorOptions())
                   .withFaceLandmarks()
@@ -43,6 +46,7 @@ const HomePage = () => {
 
                 if (detections) {
                   setIsFaceDetected(true);
+                  drawFaceRect(detections.detection.box);
                   try {
                     const match = await verifyFace(detections.descriptor);
                     if (match) {
@@ -55,16 +59,9 @@ const HomePage = () => {
                   }
                 } else {
                   setIsFaceDetected(false);
+                  clearCanvas();
                 }
-
-                const currentTime = new Date().getTime();
-                if (currentTime - startTime >= 5000) {
-                  clearInterval(interval);
-                  if (!isFaceDetected) {
-                    setMessage('No face detected within 5 seconds');
-                  }
-                }
-              }, 400); // Detect every 400 milliseconds
+              }, 5000); // Detect every 5 seconds
             }
           })
           .catch(err => {
@@ -97,9 +94,26 @@ const HomePage = () => {
         status: 'success',
         timestamp: new Date().toISOString()
       });
-      console.log('Face data logged successfully');
+      setMessage('Face data logged successfully');
     } catch (error) {
       console.error('Error logging face data:', error);
+    }
+  };
+
+  const drawFaceRect = (box: faceapi.Rect) => {
+    const ctx = canvasRef.current?.getContext('2d');
+    if (ctx && canvasRef.current) {
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
+      ctx.strokeStyle = isFaceDetected ? 'green' : 'red';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(box.x, box.y, box.width, box.height);
+    }
+  };
+
+  const clearCanvas = () => {
+    const ctx = canvasRef.current?.getContext('2d');
+    if (ctx && canvasRef.current) {
+      ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
     }
   };
 
@@ -108,14 +122,17 @@ const HomePage = () => {
       <h1>Face Recognition App</h1>
       {error && <p>{error}</p>}
       {modelsLoaded ? (
-        <video
-          ref={videoRef}
-          autoPlay
-          muted
-          width="100%"
-          height="800"
-          style={{ display: 'block', margin: 'auto' }}
-        />
+        <>
+          <video
+            ref={videoRef}
+            autoPlay
+            muted
+            width="100%"
+            height="800"
+            style={{ display: 'block', margin: 'auto' }}
+          />
+          <canvas ref={canvasRef} width="100%" height="800" style={{ display: 'block', margin: 'auto' }} />
+        </>
       ) : (
         <p>Loading models...</p>
       )}
