@@ -1,6 +1,11 @@
 import { useState } from 'react';
 import axios from 'axios';
-  
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
+import 'bootstrap/dist/css/bootstrap.min.css';
+import styles from '../styles/upload.module.sass';
+import { Container, Form, Button } from 'react-bootstrap';
+
 const UploadPage = () => {
   const [employeeId, setEmployeeId] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
@@ -13,8 +18,8 @@ const UploadPage = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!selectedFiles || !employeeId) {
-      alert('Please select files and enter employee ID');
+    if (!selectedFiles || !employeeId || !name) {
+      toast.error('Please fill all the fields and select files');
       return;
     }
 
@@ -31,53 +36,48 @@ const UploadPage = () => {
           'Content-Type': 'multipart/form-data'
         }
       });
-      alert('Files uploaded successfully');
+      toast.success('Files uploaded successfully');
     } catch (error) {
       console.error('Error uploading files:', error);
-      alert('Failed to upload files');
+      toast.error('Failed to upload files');
     }
   };
 
   return (
-    <div>
+    <Container className={styles.container}>
       <h1>Upload Employee Photos</h1>
-      <form onSubmit={handleSubmit}>
-        <div>
-          <label>
-            Employee ID:
-            <input
-              type="text"
-              value={employeeId}
-              onChange={(e) => setEmployeeId(e.target.value)}
-              required
-            />
-          </label>
-        </div>
-        <div>
-          <label>
-            Name:
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
-          </label>
-        </div>
-        <div>
-          <label>
-            Select Photos:
-            <input
-              type="file"
-              multiple
-              onChange={handleFileChange}
-              required
-            />
-          </label>
-        </div>
-        <button type="submit">Upload</button>
-      </form>
-    </div>
+      <Form onSubmit={handleSubmit}>
+        <Form.Group className={styles['form-group']}>
+          <Form.Label>Employee ID</Form.Label>
+          <Form.Control
+            type="text"
+            value={employeeId}
+            onChange={(e) => setEmployeeId(e.target.value)}
+            required
+          />
+        </Form.Group>
+        <Form.Group className={styles['form-group']}>
+          <Form.Label>Name</Form.Label>
+          <Form.Control
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+          />
+        </Form.Group>
+        <Form.Group className={styles['form-group']}>
+          <Form.Label>Select Photos</Form.Label>
+          <Form.Control
+            type="file"
+            multiple
+            onChange={handleFileChange}
+            required
+          />
+        </Form.Group>
+        <Button type="submit">Upload</Button>
+      </Form>
+      <ToastContainer />
+    </Container>
   );
 };
 
