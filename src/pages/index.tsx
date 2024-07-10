@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import * as faceapi from 'face-api.js';
 import axios from 'axios';
 import { Container, Card } from 'react-bootstrap';
+import moment from 'moment-timezone';
 
 const HomePage = () => {
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -13,6 +14,8 @@ const HomePage = () => {
   const [isFaceDetected, setIsFaceDetected] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [faceBox, setFaceBox] = useState<faceapi.Box | null>(null);
+  const [loggedUsers, setLoggedUsers] = useState<{ [key: string]: number }>({}); // Track logged users and times
+  const [lastFaceDetectedTime, setLastFaceDetectedTime] = useState<number | null>(null); // Last time a face was detected
 
   useEffect(() => {
     const loadFaceModels = async () => {
@@ -48,32 +51,44 @@ const HomePage = () => {
               setIsFaceDetected(true);
               setFaceBox(detections.detection.box);
               drawFaceRect(detections.detection.box);
-              try {
-                const match = await verifyFace(detections.descriptor);
-                if (match) {
+
+              const now = Date.now();
+
+              const match = await verifyFace(detections.descriptor);
+              if (match) {
+                const { id, name } = match;
+                if (!loggedUsers[id] || now - loggedUsers[id] > 60000) { // Check if more than 1 minute has passed
                   setMessage('Face recognized successfully');
                   successAudioRef.current?.play(); // Play success sound
-                  await logFaceData(match.id, match.name);
-                  clearInterval(interval);
+                  await logFaceData(id, name);
+                  setLoggedUsers((prev) => ({ ...prev, [id]: now })); // Update logged time for this user
                   setTimeout(() => {
                     setMessage(null);
                     setIsFaceDetected(false);
                   }, 3000);
                 }
-              } catch (error) {
-                console.error('Error verifying face:', error);
-                setMessage('Error verifying face');
+              } else {
+                setMessage('Face not recognized');
                 errorAudioRef.current?.play(); // Play error sound
                 setTimeout(() => {
                   setMessage(null);
                 }, 3000);
               }
+
+              setLastFaceDetectedTime(now); // Update last detected time
             } else {
               setIsFaceDetected(false);
               setFaceBox(null);
               clearCanvas();
+
+              // If no face is detected for more than 3 seconds, clear lastFaceDetectedTime
+              if (lastFaceDetectedTime && Date.now() - lastFaceDetectedTime > 3000) {
+                setLastFaceDetectedTime(null);
+              }
             }
-          }, 5000); // Detect every 5 seconds
+          }, 1000); // Detect every second
+
+          return () => clearInterval(interval);
         } catch (err) {
           setError('Error accessing the webcam');
           console.error('Error accessing the webcam:', err);
@@ -84,7 +99,7 @@ const HomePage = () => {
     if (modelsLoaded) {
       detectFace();
     }
-  }, [modelsLoaded]);
+  }, [modelsLoaded, loggedUsers, lastFaceDetectedTime]);
 
   const verifyFace = async (descriptor: Float32Array) => {
     try {
@@ -104,7 +119,7 @@ const HomePage = () => {
         employeeId,
         name,
         status: 'success',
-        timestamp: new Date().toISOString()
+        timestamp: moment().tz('Asia/Tashkent').toISOString()
       });
       setMessage('Face data logged successfully');
     } catch (error) {
@@ -151,7 +166,7 @@ const HomePage = () => {
                     top: faceBox.y,
                     left: faceBox.x,
                     width: faceBox.width,
-                    backgroundColor: isFaceDetected ? 'rgba(0, 255, 0, 0.7)' : 'rgba(255, 0, 0, 0.7)',
+                    backgroundColor: message === 'Face recognized successfully' ? 'rgba(0, 255, 0, 0.7)' : 'rgba(255, 0, 0, 0.7)',
                     color: 'white',
                     padding: '5px',
                     borderRadius: '5px',
