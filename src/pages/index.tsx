@@ -14,15 +14,15 @@ const HomePage = () => {
   const [isFaceDetected, setIsFaceDetected] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [faceBox, setFaceBox] = useState<faceapi.Box | null>(null);
-  const [loggedUsers, setLoggedUsers] = useState<{ [key: string]: number }>({}); // Track logged users and times
-  const [lastFaceDetectedTime, setLastFaceDetectedTime] = useState<number | null>(null); // Last time a face was detected
+  const [loggedUsers, setLoggedUsers] = useState<{ [key: string]: number }>({});
+  const [lastFaceDetectedTime, setLastFaceDetectedTime] = useState<number | null>(null);
 
   useEffect(() => {
     const loadFaceModels = async () => {
       try {
-        await faceapi.nets.tinyFaceDetector.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/tiny_face_detector_model-weights_manifest.json');
-        await faceapi.nets.faceLandmark68Net.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/face_landmark_68_model-weights_manifest.json');
-        await faceapi.nets.faceRecognitionNet.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/face_recognition_model-weights_manifest.json');
+        await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
+        await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
         setModelsLoaded(true);
       } catch (error) {
         setError('Error loading models');
@@ -53,7 +53,6 @@ const HomePage = () => {
               drawFaceRect(detections.detection.box);
 
               const now = Date.now();
-
               const match = await verifyFace(detections.descriptor);
               if (match) {
                 const { id, name } = match;
@@ -148,7 +147,6 @@ const HomePage = () => {
     <Container>
       <Card className="mt-5">
         <Card.Body>
-          <h1 className="text-center">Face Recognition App</h1>
           {error && <p className="text-danger text-center">{error}</p>}
           {modelsLoaded ? (
             <div style={{ position: 'relative' }}>
@@ -156,9 +154,9 @@ const HomePage = () => {
                 ref={videoRef}
                 autoPlay
                 muted
-                style={{ display: 'block', margin: 'auto', width: '100%', height: '800px' }}
+                style={{ display: 'block', margin: 'auto', width: '100%', height: '100vh' }}
               />
-              <canvas ref={canvasRef} style={{ display: 'block', margin: 'auto', width: '100%', height: '800px' }} />
+              <canvas ref={canvasRef} style={{ display: 'block', margin: 'auto', width: '100%', height: '100vh' }} />
               {faceBox && message && (
                 <div
                   style={{
@@ -176,7 +174,7 @@ const HomePage = () => {
                   {message}
                 </div>
               )}
-              <audio ref={successAudioRef} src="/sounds/succes.mp3" />
+              <audio ref={successAudioRef} src="/sounds/success.mp3" />
               <audio ref={errorAudioRef} src="/sounds/error.mp3" />
             </div>
           ) : (
