@@ -10,6 +10,7 @@ const UploadPage = () => {
   const [employeeId, setEmployeeId] = useState('');
   const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [name, setName] = useState('');
+  const [role, setRole] = useState<string>('chef'); // Default role set to chef
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedFiles(event.target.files);
@@ -18,14 +19,15 @@ const UploadPage = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!selectedFiles || !employeeId || !name) {
-      toast.error('Please fill all the fields and select files');
+    if (!selectedFiles || !employeeId || !name || !role ) {
+      toast.error('Please fill in all fields and select files');
       return;
     }
 
     const formData = new FormData();
     formData.append('employeeId', employeeId);
-    formData.append('name', name); // Add name to FormData
+    formData.append('name', name);
+    formData.append('role', role);
     for (let i = 0; i < selectedFiles.length; i++) {
       formData.append('files', selectedFiles[i]);
     }
@@ -38,14 +40,14 @@ const UploadPage = () => {
       });
       toast.success('Files uploaded successfully');
     } catch (error) {
-      console.error('Error uploading files:', error);
-      toast.error('Failed to upload files');
+      console.error('Failed to upload files:', error);
+      toast.error('Error uploading files');
     }
   };
 
   return (
     <Container className={styles.container}>
-      <h1>Upload Employee Photos</h1>
+      <h1>Employee Image Upload</h1>
       <Form onSubmit={handleSubmit}>
         <Form.Group className={styles['form-group']}>
           <Form.Label>Employee ID</Form.Label>
@@ -66,7 +68,16 @@ const UploadPage = () => {
           />
         </Form.Group>
         <Form.Group className={styles['form-group']}>
-          <Form.Label>Select Photos</Form.Label>
+          <Form.Label>Select Role</Form.Label>
+          <Form.Control
+            type="text"
+            value={role}
+            onChange={(e) => setRole(e.target.value)}
+            required
+          />
+        </Form.Group>
+        <Form.Group className={styles['form-group']}>
+          <Form.Label>Select Images</Form.Label>
           <Form.Control
             type="file"
             multiple

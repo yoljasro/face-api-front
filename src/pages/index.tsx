@@ -16,13 +16,14 @@ const HomePage = () => {
   const [faceBox, setFaceBox] = useState<faceapi.Box | null>(null);
   const [loggedUsers, setLoggedUsers] = useState<{ [key: string]: number }>({});
   const [lastFaceDetectedTime, setLastFaceDetectedTime] = useState<number | null>(null);
+  const [isWriting, setIsWriting] = useState(false); // Flag to check if writing to the database
 
   useEffect(() => {
     const loadFaceModels = async () => {
       try {
-        await faceapi.nets.tinyFaceDetector.loadFromUri('/models');
-        await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
-        await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
+        await faceapi.nets.tinyFaceDetector.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/tiny_face_detector_model-weights_manifest.json');
+        await faceapi.nets.faceLandmark68Net.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/face_landmark_68_model-weights_manifest.json');
+        await faceapi.nets.faceRecognitionNet.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/face_recognition_model-weights_manifest.json');
         setModelsLoaded(true);
       } catch (error) {
         setError('Error loading models');
@@ -57,10 +58,14 @@ const HomePage = () => {
               if (match) {
                 const { id, name } = match;
                 if (!loggedUsers[id] || now - loggedUsers[id] > 60000) { // Check if more than 1 minute has passed
-                  setMessage('Face recognized successfully');
-                  successAudioRef.current?.play(); // Play success sound
-                  await logFaceData(id, name);
-                  setLoggedUsers((prev) => ({ ...prev, [id]: now })); // Update logged time for this user
+                  if (!isWriting) { // Check if writing is not in progress
+                    setIsWriting(true);
+                    setMessage('Face recognized successfully');
+                    successAudioRef.current?.play(); // Play success sound
+                    await logFaceData(id, name);
+                    setLoggedUsers((prev) => ({ ...prev, [id]: now })); // Update logged time for this user
+                    setIsWriting(false);
+                  }
                   setTimeout(() => {
                     setMessage(null);
                     setIsFaceDetected(false);
@@ -98,7 +103,7 @@ const HomePage = () => {
     if (modelsLoaded) {
       detectFace();
     }
-  }, [modelsLoaded, loggedUsers, lastFaceDetectedTime]);
+  }, [modelsLoaded, loggedUsers, lastFaceDetectedTime, isWriting]);
 
   const verifyFace = async (descriptor: Float32Array) => {
     try {
@@ -170,14 +175,14 @@ const HomePage = () => {
                     borderRadius: '5px',
                     textAlign: 'center'
                   }}
-                >
+                > 
                   {message}
                 </div>
               )}
               <audio ref={successAudioRef} src="/sounds/success.mp3" />
               <audio ref={errorAudioRef} src="/sounds/error.mp3" />
             </div>
-          ) : (
+          ) : ( 
             <p className="text-center">Loading models...</p>
           )}
         </Card.Body>
