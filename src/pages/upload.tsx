@@ -1,16 +1,14 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import axios from 'axios';
-import { ToastContainer, toast } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
-import 'bootstrap/dist/css/bootstrap.min.css';
-import styles from '../styles/upload.module.sass';
-import { Container, Form, Button } from 'react-bootstrap';
+import { Container, Card, Form, Button } from 'react-bootstrap';
 
 const UploadPage = () => {
   const [employeeId, setEmployeeId] = useState('');
-  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
   const [name, setName] = useState('');
-  const [role, setRole] = useState<string>('chef'); // Default role set to chef
+  const [role, setRole] = useState('');
+  const [selectedFiles, setSelectedFiles] = useState<FileList | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [message, setMessage] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedFiles(event.target.files);
@@ -19,8 +17,8 @@ const UploadPage = () => {
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
 
-    if (!selectedFiles || !employeeId || !name || !role ) {
-      toast.error('Please fill in all fields and select files');
+    if (!employeeId || !name || !role || !selectedFiles) {
+      setError('Barcha maydonlarni to\'ldiring');
       return;
     }
 
@@ -28,66 +26,64 @@ const UploadPage = () => {
     formData.append('employeeId', employeeId);
     formData.append('name', name);
     formData.append('role', role);
-    for (let i = 0; i < selectedFiles.length; i++) {
-      formData.append('files', selectedFiles[i]);
-    }
+
+    Array.from(selectedFiles).forEach((file) => {
+      formData.append('images', file);
+    });
 
     try {
-      await axios.post('https://studentunion.uz/api/upload', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data'
-        }
+      const response = await axios.post('http://localhost:4000/api/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
       });
-      toast.success('Files uploaded successfully');
+      setMessage(`Foydalanuvchi muvaffaqiyatli qo'shildi: ${response.data.name}`);
+      setError(null);
     } catch (error) {
-      console.error('Failed to upload files:', error);
-      toast.error('Error uploading files');
+      setError('Foydalanuvchini yuklashda xatolik');
+      setMessage(null);
     }
   };
 
   return (
-    <Container className={styles.container}>
-      <h1>Employee Image Upload</h1>
-      <Form onSubmit={handleSubmit}>
-        <Form.Group className={styles['form-group']}>
-          <Form.Label>Employee ID</Form.Label>
-          <Form.Control
-            type="text"
-            value={employeeId}
-            onChange={(e) => setEmployeeId(e.target.value)}
-            required
-          />
-        </Form.Group>
-        <Form.Group className={styles['form-group']}>
-          <Form.Label>Name</Form.Label>
-          <Form.Control
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            required
-          />
-        </Form.Group>
-        <Form.Group className={styles['form-group']}>
-          <Form.Label>Select Role</Form.Label>
-          <Form.Control
-            type="text"
-            value={role}
-            onChange={(e) => setRole(e.target.value)}
-            required
-          />
-        </Form.Group>
-        <Form.Group className={styles['form-group']}>
-          <Form.Label>Select Images</Form.Label>
-          <Form.Control
-            type="file"
-            multiple
-            onChange={handleFileChange}
-            required
-          />
-        </Form.Group>
-        <Button type="submit">Upload</Button>
-      </Form>
-      <ToastContainer />
+    <Container>
+      <Card>
+        <Card.Body>
+          <Form onSubmit={handleSubmit}>
+            <Form.Group>
+              <Form.Label>Xodim ID</Form.Label>
+              <Form.Control
+                type="text"
+                value={employeeId}
+                onChange={(e) => setEmployeeId(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Ism</Form.Label>
+              <Form.Control
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Roll</Form.Label>
+              <Form.Control
+                type="text"
+                value={role}
+                onChange={(e) => setRole(e.target.value)}
+              />
+            </Form.Group>
+            <Form.Group>
+              <Form.Label>Rasm fayllari</Form.Label>
+              <Form.Control type="file" onChange={handleFileChange} multiple />
+            </Form.Group>
+            {error && <Card.Text className="text-danger">{error}</Card.Text>}
+            {message && <Card.Text className="text-success">{message}</Card.Text>}
+            <Button variant="primary" type="submit">
+              Yuklash
+            </Button>
+          </Form>
+        </Card.Body>
+      </Card>
     </Container>
   );
 };

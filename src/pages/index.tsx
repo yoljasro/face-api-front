@@ -56,14 +56,14 @@ const HomePage = () => {
               const now = Date.now();
               const match = await verifyFace(detections.descriptor);
               if (match) {
-                const { id, name } = match;
-                if (!loggedUsers[id] || now - loggedUsers[id] > 60000) { // Check if more than 1 minute has passed
+                const { employeeId, name, role } = match;
+                if (!loggedUsers[employeeId] || now - loggedUsers[employeeId] > 60000) { // Check if more than 1 minute has passed
                   if (!isWriting) { // Check if writing is not in progress
                     setIsWriting(true);
                     setMessage('Face recognized successfully');
                     successAudioRef.current?.play(); // Play success sound
-                    await logFaceData(id, name);
-                    setLoggedUsers((prev) => ({ ...prev, [id]: now })); // Update logged time for this user
+                    await logFaceData(employeeId, name, role, canvasRef.current.toDataURL());
+                    setLoggedUsers((prev) => ({ ...prev, [employeeId]: now })); // Update logged time for this user
                     setIsWriting(false);
                   }
                   setTimeout(() => {
@@ -107,7 +107,7 @@ const HomePage = () => {
 
   const verifyFace = async (descriptor: Float32Array) => {
     try {
-      const response = await axios.post('https://studentunion.uz/api/verify', {
+      const response = await axios.post('http://localhost:4000/api/verify', {
         descriptor: Array.from(descriptor)
       });
       return response.data;
@@ -117,11 +117,13 @@ const HomePage = () => {
     }
   };
 
-  const logFaceData = async (employeeId: string, name: string) => {
+  const logFaceData = async (employeeId: string, name: string, role: string, image: string) => {
     try {
-      await axios.post('https://studentunion.uz/api/log', {
+      await axios.post('http://localhost:4000/api/log', {
         employeeId,
         name,
+        role,
+        image,
         status: 'success',
         timestamp: moment().tz('Asia/Tashkent').toISOString()
       });
@@ -175,14 +177,14 @@ const HomePage = () => {
                     borderRadius: '5px',
                     textAlign: 'center'
                   }}
-                > 
+                >
                   {message}
                 </div>
               )}
               <audio ref={successAudioRef} src="/sounds/success.mp3" />
               <audio ref={errorAudioRef} src="/sounds/error.mp3" />
             </div>
-          ) : ( 
+          ) : (
             <p className="text-center">Loading models...</p>
           )}
         </Card.Body>
