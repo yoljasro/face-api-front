@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { Container, Card, Form, Button } from 'react-bootstrap';
+import { Container, Card, Form, Button, Alert } from 'react-bootstrap';
+import 'bootstrap/dist/css/bootstrap.min.css'; // Ensure Bootstrap CSS is imported
 
 const UploadPage = () => {
   const [employeeId, setEmployeeId] = useState('');
@@ -44,41 +45,68 @@ const UploadPage = () => {
   };
 
   return (
-    <Container>
-      <Card>
+    <Container className="my-5">
+      <Card className="shadow-lg rounded border-0">
         <Card.Body>
+          <h2 className="text-center mb-4">Xodimni qo'shish</h2>
           <Form onSubmit={handleSubmit}>
-            <Form.Group>
+            <Form.Group className="mb-3">
               <Form.Label>Xodim ID</Form.Label>
               <Form.Control
                 type="text"
                 value={employeeId}
                 onChange={(e) => setEmployeeId(e.target.value)}
+                placeholder="Xodim ID-ni kiriting"
+                isInvalid={!employeeId}
               />
+              <Form.Control.Feedback type="invalid">
+                Xodim ID-ni kiriting.
+              </Form.Control.Feedback>
             </Form.Group>
-            <Form.Group>
+            <Form.Group className="mb-3">
               <Form.Label>Ism</Form.Label>
               <Form.Control
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                placeholder="Ismingizni kiriting"
+                isInvalid={!name}
               />
+              <Form.Control.Feedback type="invalid">
+                Ismni kiriting.
+              </Form.Control.Feedback>
             </Form.Group>
-            <Form.Group>
+            <Form.Group className="mb-3">
               <Form.Label>Roll</Form.Label>
               <Form.Control
-                type="text"
+                as="select"
                 value={role}
                 onChange={(e) => setRole(e.target.value)}
-              />
+                isInvalid={!role}
+              >
+                <option value="">Tanlang...</option>
+                <option value="Chef">Chef</option>
+                <option value="Waiter">Waiter</option>
+              </Form.Control>
+              <Form.Control.Feedback type="invalid">
+                Rollni tanlang.
+              </Form.Control.Feedback>
             </Form.Group>
-            <Form.Group>
+            <Form.Group className="mb-3">
               <Form.Label>Rasm fayllari</Form.Label>
-              <Form.Control type="file" onChange={handleFileChange} multiple />
+              <Form.Control
+                type="file"
+                onChange={handleFileChange}
+                multiple
+                isInvalid={!selectedFiles}
+              />
+              <Form.Control.Feedback type="invalid">
+                Kamida bitta rasm fayli tanlang.
+              </Form.Control.Feedback>
             </Form.Group>
-            {error && <Card.Text className="text-danger">{error}</Card.Text>}
-            {message && <Card.Text className="text-success">{message}</Card.Text>}
-            <Button variant="primary" type="submit">
+            {error && <Alert variant="danger">{error}</Alert>}
+            {message && <Alert variant="success">{message}</Alert>}
+            <Button variant="primary" type="submit" className="w-100">
               Yuklash
             </Button>
           </Form>
