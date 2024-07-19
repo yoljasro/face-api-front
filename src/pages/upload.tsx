@@ -18,7 +18,7 @@ const UploadPage = () => {
     event.preventDefault();
 
     if (!employeeId || !name || !role || !selectedFiles) {
-      setError('Barcha maydonlarni to\'ldiring');
+      setError("Barcha maydonlarni to'ldiring");
       return;
     }
 

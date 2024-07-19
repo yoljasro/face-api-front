@@ -21,6 +21,7 @@ const HomePage = () => {
   useEffect(() => {
     const loadFaceModels = async () => {
       try {
+
         await faceapi.nets.tinyFaceDetector.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/tiny_face_detector_model-weights_manifest.json');
         await faceapi.nets.faceLandmark68Net.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/face_landmark_68_model-weights_manifest.json');
         await faceapi.nets.faceRecognitionNet.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/face_recognition_model-weights_manifest.json');
@@ -116,6 +117,7 @@ const HomePage = () => {
       return null;
     }
   };
+  
 
   const logFaceData = async (employeeId: string, name: string, role: string, image: string) => {
     try {
@@ -132,7 +134,7 @@ const HomePage = () => {
       console.error('Error logging face data:', error);
     }
   };
-
+  
   const drawFaceRect = (box: faceapi.Box) => {
     const ctx = canvasRef.current?.getContext('2d');
     if (ctx && canvasRef.current) {
