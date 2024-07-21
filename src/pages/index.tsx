@@ -11,7 +11,6 @@ const HomePage = () => {
   const errorAudioRef = useRef<HTMLAudioElement | null>(null);
   const [modelsLoaded, setModelsLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isFaceDetected, setIsFaceDetected] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [faceBox, setFaceBox] = useState<faceapi.Box | null>(null);
   const [loggedUsers, setLoggedUsers] = useState<{ [key: string]: number }>({});
@@ -21,7 +20,6 @@ const HomePage = () => {
   useEffect(() => {
     const loadFaceModels = async () => {
       try {
-
         await faceapi.nets.tinyFaceDetector.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/tiny_face_detector_model-weights_manifest.json');
         await faceapi.nets.faceLandmark68Net.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/face_landmark_68_model-weights_manifest.json');
         await faceapi.nets.faceRecognitionNet.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/face_recognition_model-weights_manifest.json');
@@ -50,15 +48,13 @@ const HomePage = () => {
               .withFaceDescriptor();
 
             if (detections) {
-              setIsFaceDetected(true);
               setFaceBox(detections.detection.box);
-              drawFaceRect(detections.detection.box);
-
-              const now = Date.now();
               const match = await verifyFace(detections.descriptor);
+
               if (match) {
                 const { employeeId, name, role } = match;
-                if (!loggedUsers[employeeId] || now - loggedUsers[employeeId] > 60000) { // Check if more than 1 minute has passed
+                const now = Date.now();
+                if (!loggedUsers[employeeId] || now - loggedUsers[employeeId] > 8000) { // Check if more than 8 seconds have passed
                   if (!isWriting) { // Check if writing is not in progress
                     setIsWriting(true);
                     setMessage('Face recognized successfully');
@@ -69,7 +65,7 @@ const HomePage = () => {
                   }
                   setTimeout(() => {
                     setMessage(null);
-                    setIsFaceDetected(false);
+                    setFaceBox(null); // Clear face box after message
                   }, 3000);
                 }
               } else {
@@ -80,9 +76,8 @@ const HomePage = () => {
                 }, 3000);
               }
 
-              setLastFaceDetectedTime(now); // Update last detected time
+              setLastFaceDetectedTime(Date.now()); // Update last detected time
             } else {
-              setIsFaceDetected(false);
               setFaceBox(null);
               clearCanvas();
 
@@ -91,6 +86,7 @@ const HomePage = () => {
                 setLastFaceDetectedTime(null);
               }
             }
+            drawFaceRect();
           }, 1000); // Detect every second
 
           return () => clearInterval(interval);
@@ -117,7 +113,6 @@ const HomePage = () => {
       return null;
     }
   };
-  
 
   const logFaceData = async (employeeId: string, name: string, role: string, image: string) => {
     try {
@@ -134,17 +129,23 @@ const HomePage = () => {
       console.error('Error logging face data:', error);
     }
   };
-  
-  const drawFaceRect = (box: faceapi.Box) => {
+
+  const drawFaceRect = () => {
     const ctx = canvasRef.current?.getContext('2d');
     if (ctx && canvasRef.current) {
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
-      ctx.strokeStyle = isFaceDetected ? 'green' : 'red';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(box.x, box.y, box.width, box.height);
+  
+      if (faceBox) {
+        const { x, y, width, height } = faceBox;
+        // Default rang ko'k bo'ladi, success uchun yashil va error uchun qizil
+        ctx.strokeStyle = message === 'Face recognized successfully' ? 'green' : 
+                          message === 'Face not recognized' ? 'red' : 
+                          'blue'; // Default rang ko'k
+        ctx.lineWidth = 3;
+        ctx.strokeRect(x, y, width, height);
+      }
     }
   };
-
   const clearCanvas = () => {
     const ctx = canvasRef.current?.getContext('2d');
     if (ctx && canvasRef.current) {
@@ -153,19 +154,19 @@ const HomePage = () => {
   };
 
   return (
-    <Container>
-      <Card className="mt-5">
-        <Card.Body>
+    <Container fluid style={{ padding: 0, height: '100vh', margin: 0 }}>
+      <Card className="mt-0" style={{ border: 'none', height: '100%' }}>
+        <Card.Body style={{ padding: 0, height: '100%' }}>
           {error && <p className="text-danger text-center">{error}</p>}
           {modelsLoaded ? (
-            <div style={{ position: 'relative' }}>
+            <div style={{ position: 'relative', height: '100%', width: '100%' }}>
               <video
                 ref={videoRef}
                 autoPlay
                 muted
-                style={{ display: 'block', margin: 'auto', width: '100%', height: '100vh' }}
+                style={{ display: 'block', width: '100%', height: '100%', objectFit: 'cover' }}
               />
-              <canvas ref={canvasRef} style={{ display: 'block', margin: 'auto', width: '100%', height: '100vh' }} />
+              <canvas ref={canvasRef} style={{ display: 'block', width: '100%', height: '100%', position: 'absolute', top: 0, left: 0 }} />
               {faceBox && message && (
                 <div
                   style={{
@@ -173,7 +174,7 @@ const HomePage = () => {
                     top: faceBox.y,
                     left: faceBox.x,
                     width: faceBox.width,
-                    backgroundColor: message === 'Face recognized successfully' ? 'rgba(0, 255, 0, 0.7)' : 'rgba(255, 0, 0, 0.7)',
+                    backgroundColor: message === 'Face recognized successfully' ? 'rgba(0, 255, 0, 0.5)' : 'rgba(255, 0, 0, 0.5)',
                     color: 'white',
                     padding: '5px',
                     borderRadius: '5px',
