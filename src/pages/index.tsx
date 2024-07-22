@@ -121,7 +121,6 @@ const HomePage = () => {
         name,
         role,
         image,
-        status: 'success',
         timestamp: moment().tz('Asia/Tashkent').toISOString()
       });
       setMessage('Face data logged successfully');
@@ -146,6 +145,7 @@ const HomePage = () => {
       }
     }
   };
+  
   const clearCanvas = () => {
     const ctx = canvasRef.current?.getContext('2d');
     if (ctx && canvasRef.current) {
