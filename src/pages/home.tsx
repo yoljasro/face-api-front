@@ -37,9 +37,14 @@ const HomePage: React.FC = () => {
         faceapi.nets.ssdMobilenetv1.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/ssd_mobilenetv1_model-weights_manifest.json')
       ]);
 
-      const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+      // getUserMedia function check
+      if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      } else {
+        console.error("getUserMedia is not supported by this browser.");
       }
     };
 
