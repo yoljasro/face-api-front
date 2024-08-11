@@ -113,7 +113,7 @@ const HomePage: React.FC = () => {
 
                 // Send success data to the backend
                 try {
-                  await axios.post('http://209.97.169.206/api/recognize', {
+                  await axios.post('https://api.studentunion.uz/api/recognize', {
                     name: bestMatch.label,
                   });
                 } catch (error) {
