@@ -132,7 +132,6 @@ const HomePage: React.FC = () => {
       <video ref={videoRef} autoPlay muted style={{ width: '100%', height: '100%' }} />
       <ToastContainer />
       <div style={{ position: 'absolute', bottom: 0, left: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', color: 'white', padding: '10px' }}>
-        <h4>Recognized Users:</h4>
         <ul>
           {recognizedUsers.map((user, index) => (
             <li key={index}>{user.name} - {new Date(user.recognizedAt).toLocaleString()}</li>
