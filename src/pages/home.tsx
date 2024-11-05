@@ -117,7 +117,7 @@ const HomePage: React.FC = () => {
                     name: bestMatch.label,
                   });
                 } catch (error) {
-                  console.error('Error sending recognition data to backend:', error);
+                  console.error('Error sending recognition dat a to backend:', error);
                 }
               }
             }
