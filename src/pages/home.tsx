@@ -14,6 +14,10 @@ const HomePage: React.FC = () => {
   const lastCheckTimeRef = useRef<number>(0);
 
   // Fetch user info from the server
+
+  const ADMIN_CHAT_ID =1847596793
+  const BOT_TOKEN="7440125833:AAFrWVjkQTTMO991fbR9uWmeEzh7BFR8rE0"
+
   const fetchUserInfo = async () => {
     try {
       const response = await axios.get('/api/users');
@@ -55,71 +59,26 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     if (videoRef.current && !loading) {
       videoRef.current.addEventListener('play', async () => {
-        const labeledDescriptors = await Promise.all(
-          userInfo.map(async (user) => {
-            const img = await faceapi.fetchImage(user.imageUrl);
-            const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
-            if (detections) {
-              return new faceapi.LabeledFaceDescriptors(user.name, [detections.descriptor]);
-            } else {
-              return null;
-            }
-          }).filter(Boolean)
-        );
-
-        if (labeledDescriptors.length === 0) {
-          console.error('No labeled descriptors found');
-          return;
-        }
-
-        const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors as faceapi.LabeledFaceDescriptors[]);
+        // … model yuklash va faceMatcher tayyorlash …
 
         setInterval(async () => {
-          const currentTime = Date.now();
-          if (currentTime - lastCheckTimeRef.current < 10000) {
-            return;
-          }
+          // … detection logikasi …
 
-          if (videoRef.current) {
-            const detections = await faceapi.detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
-              .withFaceLandmarks()
-              .withFaceDescriptors();
-            if (detections.length > 0) {
-              const bestMatch = faceMatcher.findBestMatch(detections[0].descriptor);
-              lastCheckTimeRef.current = currentTime;
+          if (bestMatch.label !== 'unknown') {
+            // … toast, audio ijro …
 
-              if (bestMatch.label === 'unknown') {
-                if (errorAudioRef.current) errorAudioRef.current.play();
-                toast.error('Error: User not recognized!', {
-                  position: "top-right",
-                  autoClose: 5000,
-                  hideProgressBar: false,
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  progress: undefined,
-                });
-              } else {
-                if (successAudioRef.current) successAudioRef.current.play();
-                toast.success(`Success: User ${bestMatch.label} recognized!`, {
-                  position: "top-right",
-                  autoClose: 5000,
-                  hideProgressBar: false,
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  progress: undefined,
-                });
-
-                // Send success data to the backend
-                try {
-                  await axios.post('https://faceapibot-production.up.railway.app/api/recognize', {
-                    name: bestMatch.label,
-                  });
-                } catch (error) {
-                  console.error('Error sending recognition dat a to backend:', error);
+            // Xabarni shaxsiy chatga yuboramiz
+            try {
+              await axios.post(
+                `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
+                {
+                  chat_id: ADMIN_CHAT_ID,
+                  text: `✅ User *${bestMatch.label}* recognized at ${new Date().toLocaleString()}!`,
+                  parse_mode: 'Markdown'
                 }
-              }
+              );
+            } catch (err) {
+              console.error('Telegram API xatosi:', err);
             }
           }
         }, 3000);
