@@ -13,10 +13,9 @@ const HomePage: React.FC = () => {
   const errorAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastCheckTimeRef = useRef<number>(0);
 
-  // Fetch user info from the server
-
-  const ADMIN_CHAT_ID =1847596793
-  const BOT_TOKEN="7440125833:AAFrWVjkQTTMO991fbR9uWmeEzh7BFR8rE0"
+  // 🔐 Bu yerda o'zingizning bot token va chat_id'nizni kiriting
+  const ADMIN_CHAT_ID = 1847596793
+  const BOT_TOKEN = "7440125833:AAFrWVjkQTTMO991fbR9uWmeEzh7BFR8rE0"
 
   const fetchUserInfo = async () => {
     try {
@@ -41,7 +40,6 @@ const HomePage: React.FC = () => {
         faceapi.nets.ssdMobilenetv1.loadFromUri('https://raw.githubusercontent.com/justadudewhohacks/face-api.js/master/weights/ssd_mobilenetv1_model-weights_manifest.json')
       ]);
 
-      // getUserMedia function check
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const stream = await navigator.mediaDevices.getUserMedia({ video: {} });
         if (videoRef.current) {
@@ -59,26 +57,77 @@ const HomePage: React.FC = () => {
   useEffect(() => {
     if (videoRef.current && !loading) {
       videoRef.current.addEventListener('play', async () => {
-        // … model yuklash va faceMatcher tayyorlash …
+        const labeledDescriptors = await Promise.all(
+          userInfo.map(async (user) => {
+            const img = await faceapi.fetchImage(user.imageUrl);
+            const detections = await faceapi.detectSingleFace(img).withFaceLandmarks().withFaceDescriptor();
+            if (detections) {
+              return new faceapi.LabeledFaceDescriptors(user.name, [detections.descriptor]);
+            } else {
+              return null;
+            }
+          }).filter(Boolean)
+        );
+
+        if (labeledDescriptors.length === 0) {
+          console.error('No labeled descriptors found');
+          return;
+        }
+
+        const faceMatcher = new faceapi.FaceMatcher(labeledDescriptors as faceapi.LabeledFaceDescriptors[]);
 
         setInterval(async () => {
-          // … detection logikasi …
+          const currentTime = Date.now();
+          if (currentTime - lastCheckTimeRef.current < 10000) return;
 
-          if (bestMatch.label !== 'unknown') {
-            // … toast, audio ijro …
+          if (videoRef.current) {
+            const detections = await faceapi.detectAllFaces(videoRef.current, new faceapi.TinyFaceDetectorOptions())
+              .withFaceLandmarks()
+              .withFaceDescriptors();
 
-            // Xabarni shaxsiy chatga yuboramiz
-            try {
-              await axios.post(
-                `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`,
-                {
-                  chat_id: ADMIN_CHAT_ID,
-                  text: `✅ User *${bestMatch.label}* recognized at ${new Date().toLocaleString()}!`,
-                  parse_mode: 'Markdown'
+            if (detections.length > 0) {
+              const bestMatch = faceMatcher.findBestMatch(detections[0].descriptor);
+              lastCheckTimeRef.current = currentTime;
+
+              if (bestMatch.label === 'unknown') {
+                if (errorAudioRef.current) errorAudioRef.current.play();
+                toast.error('Error: User not recognized!', {
+                  position: "top-right",
+                  autoClose: 5000,
+                  hideProgressBar: false,
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  progress: undefined,
+                });
+              } else {
+                if (successAudioRef.current) successAudioRef.current.play();
+                toast.success(`Success: User ${bestMatch.label} recognized!`, {
+                  position: "top-right",
+                  autoClose: 5000,
+                  hideProgressBar: false,
+                  closeOnClick: true,
+                  pauseOnHover: true,
+                  draggable: true,
+                  progress: undefined,
+                });
+
+                // ✅ Telegramga yuborish
+                try {
+                  await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+                    chat_id: ADMIN_CHAT_ID,
+                    text: `✅ Foydalanuvchi *${bestMatch.label}* tanildi!\n🕒 Vaqt: ${new Date().toLocaleString()}`,
+                    parse_mode: 'Markdown'
+                  });
+                } catch (error) {
+                  console.error('Telegramga yuborishda xatolik:', error);
                 }
-              );
-            } catch (err) {
-              console.error('Telegram API xatosi:', err);
+
+                setRecognizedUsers(prev => [
+                  ...prev,
+                  { name: bestMatch.label, recognizedAt: new Date().toISOString() }
+                ]);
+              }
             }
           }
         }, 3000);
