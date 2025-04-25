@@ -15,7 +15,7 @@ const HomePage: React.FC = () => {
 
   // 🔐 Bu yerda o'zingizning bot token va chat_id'nizni kiriting
   const ADMIN_CHAT_ID =  '363452247'  
-  const BOT_TOKEN = "7440125833:AAFrWVjkQTTMO991fbR9uWmeEzh7BFR8rE0"
+  const BOT_TOKEN = "7331623828:AAGC0Tv8Q43n9uzkzHt44dp6sDRK_uzJUgA"
 
   const fetchUserInfo = async () => {
     try {
