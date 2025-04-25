@@ -13,9 +13,9 @@ const HomePage: React.FC = () => {
   const errorAudioRef = useRef<HTMLAudioElement | null>(null);
   const lastCheckTimeRef = useRef<number>(0);
 
-  // 🔐 Bu yerda o'zingizning bot token va chat_id'nizni kiriting
-  const ADMIN_CHAT_ID =  '1847596793'  
-  const BOT_TOKEN = "7331623828:AAGC0Tv8Q43n9uzkzHt44dp6sDRK_uzJUgA"
+  // 🔐 Telegram konfiguratsiyasi
+  const ADMIN_CHAT_IDS = ['1847596793', '363452247' , '1703824293']; // <-- bu yerga kerakli admin chat_id larni yozing
+  const BOT_TOKEN = "7331623828:AAGC0Tv8Q43n9uzkzHt44dp6sDRK_uzJUgA";
 
   const fetchUserInfo = async () => {
     try {
@@ -25,6 +25,20 @@ const HomePage: React.FC = () => {
     } catch (error) {
       console.error('Error fetching user info:', error);
       setLoading(false);
+    }
+  };
+
+  const sendToTelegram = async (message: string) => {
+    try {
+      for (const chatId of ADMIN_CHAT_IDS) {
+        await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+          chat_id: chatId,
+          text: message,
+          parse_mode: 'Markdown'
+        });
+      }
+    } catch (err) {
+      console.error('❌ Telegramga yuborishda xatolik:', err);
     }
   };
 
@@ -93,35 +107,19 @@ const HomePage: React.FC = () => {
                 if (errorAudioRef.current) errorAudioRef.current.play();
                 toast.error('Error: User not recognized!', {
                   position: "top-right",
-                  autoClose: 5000,
-                  hideProgressBar: false,
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  progress: undefined,
+                  autoClose: 5000
                 });
               } else {
                 if (successAudioRef.current) successAudioRef.current.play();
                 toast.success(`Success: User ${bestMatch.label} recognized!`, {
                   position: "top-right",
-                  autoClose: 5000,
-                  hideProgressBar: false,
-                  closeOnClick: true,
-                  pauseOnHover: true,
-                  draggable: true,
-                  progress: undefined,
+                  autoClose: 5000
                 });
 
-                // ✅ Telegramga yuborish
-                try {
-                  await axios.post(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-                    chat_id: ADMIN_CHAT_ID,
-                    text: `✅ Foydalanuvchi *${bestMatch.label}* tanildi!\n🕒 Vaqt: ${new Date().toLocaleString()}`,
-                    parse_mode: 'Markdown'
-                  });
-                } catch (error) {
-                  console.error('Telegramga yuborishda xatolik:', error);
-                }
+                // ✅ Telegramga xabar yuborish
+                const time = new Date().toLocaleString();
+                const message = `✅ Foydalanuvchi *${bestMatch.label}* tanildi!\n🕒 Vaqt: ${time}`;
+                await sendToTelegram(message);
 
                 setRecognizedUsers(prev => [
                   ...prev,
@@ -139,7 +137,14 @@ const HomePage: React.FC = () => {
     <div style={{ position: 'relative', width: '100%', height: '100%' }}>
       <video ref={videoRef} autoPlay muted style={{ width: '100%', height: '100%' }} />
       <ToastContainer />
-      <div style={{ position: 'absolute', bottom: 0, left: 0, backgroundColor: 'rgba(0, 0, 0, 0.5)', color: 'white', padding: '10px' }}>
+      <div style={{
+        position: 'absolute',
+        bottom: 0,
+        left: 0,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        color: 'white',
+        padding: '10px'
+      }}>
         <ul>
           {recognizedUsers.map((user, index) => (
             <li key={index}>{user.name} - {new Date(user.recognizedAt).toLocaleString()}</li>
