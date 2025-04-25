@@ -14,7 +14,7 @@ const HomePage: React.FC = () => {
   const lastCheckTimeRef = useRef<number>(0);
 
   // 🔐 Bu yerda o'zingizning bot token va chat_id'nizni kiriting
-  const ADMIN_CHAT_ID =  '363452247'  
+  const ADMIN_CHAT_ID =  '1847596793'  
   const BOT_TOKEN = "7331623828:AAGC0Tv8Q43n9uzkzHt44dp6sDRK_uzJUgA"
 
   const fetchUserInfo = async () => {
