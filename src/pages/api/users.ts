@@ -5,23 +5,18 @@ const users = [
   { name: "Jasur", imageUrl: "/uploads/jasur.jpg" },
   { name: "Aziz Manapov ", imageUrl: "/uploads/Aziz.jpg" },
   { name: "Shuhratjon SaitMuradov ", imageUrl: "/uploads/shuhratjon.jpg" },
-  { name: "Shahnoza ", imageUrl: "/uploads/one.jpg" },
   { name: "Yusuf ", imageUrl: "/uploads/two.jpg" },
   { name: "Shuhrat ", imageUrl: "/uploads/three.jpg" },
   { name: "Elbek ", imageUrl: "/uploads/four.jpg" },
   { name: "Anvar ", imageUrl: "/uploads/anvar.jpg" },
-  { name: "Olya", imageUrl: "/uploads/olya.jpg" },
-  { name: "Bobur ", imageUrl: "/uploads/five.jpg" },
   { name: "Diana ", imageUrl: "/uploads/six.jpg" },
   { name: "Svetlana ", imageUrl: "/uploads/svetlanaorg.jpg" },
   { name: "Larisa ", imageUrl: "/uploads/Larisa.png" },
   { name: "Anna ", imageUrl: "/uploads/Anna.png" },
   { name: "Tohir ", imageUrl: "/uploads/Tohir.png" },
-  { name: "Umeba ", imageUrl: "/uploads/Umeba.png" },
   { name: "Aziz ", imageUrl: "/uploads/Aziztwo.jpg" },
   { name: "Samandar ", imageUrl: "/uploads/saman.jpg" },
-                                                                                                                                                                                                                        
-
+                                                                                                                                                                                                                      
 ];
 
 export default (req: NextApiRequest, res: NextApiResponse) => {
