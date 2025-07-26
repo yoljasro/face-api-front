@@ -20,6 +20,8 @@ const users = [
   { name: "Umeba ", imageUrl: "/uploads/Umeba.png" },
   { name: "Samandar ", imageUrl: "/uploads/Samandar.jpg" },
   { name: "Aziz ", imageUrl: "/uploads/Aziz2.png" },
+  { name: "Samandar ", imageUrl: "/uploads/saman.jpg" },
+
 
                                                                                                                                                                                                                         
 
