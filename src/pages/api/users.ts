@@ -13,8 +13,6 @@ const users = [
   { name: "Larisa ", imageUrl: "/uploads/Larisa.png" },
   { name: "Anna ", imageUrl: "/uploads/Anna.png" },
   { name: "Tohir ", imageUrl: "/uploads/Tohir.png" },
-  { name: "Aziz ", imageUrl: "/uploads/Aziztwo.jpg" },
-  { name: "Samandar ", imageUrl: "/uploads/saman.jpg" },
                                                                                                                                                                                                                       
 ];
 
