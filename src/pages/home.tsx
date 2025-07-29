@@ -14,7 +14,7 @@ const HomePage: React.FC = () => {
   const lastCheckTimeRef = useRef<number>(0);
 
   // 🔐 Telegram konfiguratsiyasi
-  const ADMIN_CHAT_IDS = ['1847596793', '363452247' , '1703824293']; // <-- bu yerga kerakli admin chat_id larni yozing
+  const ADMIN_CHAT_IDS = ['1847596793', '363452247' , '1703824293'];
   const BOT_TOKEN = "7331623828:AAGC0Tv8Q43n9uzkzHt44dp6sDRK_uzJUgA";
 
   const fetchUserInfo = async () => {
